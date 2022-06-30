@@ -1,24 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const query = {
+  query: `{contracts(orderBy: SALES, orderDirection: DESC) {
+    edges {
+      node {
+        address
+        ... on ERC721Contract {
+          name
+          stats {
+            totalSales
+            average
+            ceiling
+            floor
+            volume
+          }
+          symbol
+        }
+      }
+    }
+  }}
+`
+};
 
 function App() {
+  const [contracts, setContracts] = useState([]);
+  useEffect(() => {
+    axios
+      .post(process.env.REACT_APP_GRAPHQL_API, query, {
+        headers: { 'x-api-key': process.env.REACT_APP_X_API_KEY }
+      })
+      .then(({ data }) => setContracts(data.data.contracts.edges))
+      .catch(err => console.error(err));
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ul>
+      {contracts.map(contract => (
+        <li key={contract.node.address}>{contract.node.address}</li>
+      ))}
+    </ul>
   );
 }
 
